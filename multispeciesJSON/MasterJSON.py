@@ -1,5 +1,5 @@
 '''
-
+s
 the combination of species json file will be constructed based on the assumption
 that all metabolite and reaction, if their id(s) are the same, everythin within
 the the reaction metabolite is the same.
