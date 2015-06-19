@@ -30,12 +30,25 @@ def do_everything(just_name):
         temp['id'] = obj['id'][2:]
         temp['name'] = obj['name']
         temp['compartment'] = obj['compartment']
+        temp['species'] = []
+        temp['species'].append(model_tag['id'])
         p = obj.find_all('p')
+        counter_in = 0
         for item in p:
             if item.text[:8] == 'FORMULA:':
-                temp['formula'] = item.text[8:]
+                temp['formula'] = item.text[9:]
             if item.text[:7] == 'CHARGE:':
-                temp['charge'] = item.text[7:]
+                if type(item.text[8:]) is int:
+                    temp['charge'] = item.text[8:]
+                else:
+                    temp['charge'] = 0
+                    counter_in += 1
+        if obj['id'][-2:] == '_e':
+            temp['outside'] = True
+        elif obj['id'][-2:] == '_c' or '_p':
+            temp['outside'] = None
+        else:
+            print('error in assigning metabolite outside attribute')
         species_list.append(temp)
 
     reaction = model_tag.listofreactions.find_all('reaction')
@@ -44,6 +57,8 @@ def do_everything(just_name):
         temp = {}
         temp['id'] = good['id'][2:]
         temp['name'] = good['name']
+        temp['species'] = []
+        temp['species'].append(model_tag['id'])
         if good.has_attr('reversible'):
             temp['reversible'] = good['reversible']
         else:
@@ -52,11 +67,11 @@ def do_everything(just_name):
         p = good.find_all('p')
         for item in p:
             if item.text[:17] == 'GENE_ASSOCIATION:':
-                temp['gene association'] = item.text[17:]
+                temp['gene association'] = item.text[18:]
             if item.text[:10] == 'SUBSYSTEM:':
-                temp['subsystem'] = item.text[10:]
+                temp['subsystem'] = item.text[11:]
             if item.text[:10] == 'EC Number:':
-                temp['EC_Number'] = item.text[10:]
+                temp['EC_Number'] = item.text[11:]
         pp = good.find_all('speciesreference')
         metabolite = {}
         for item in pp:
@@ -86,6 +101,12 @@ def do_everything(just_name):
                 temp['flux_value'] = float(item['value'])
             if item['id'] == 'OBJECTIVE_COEFFICIENT':
                 temp['objective_coefficient'] = float(item['value'])
+        temp['outside'] = True
+        for item in pp:
+            if item['species'][-2:] != '_e':
+                temp['outside'] = None
+                break
+        species_list.append(temp)
         reaction_list.append(temp)
 
     output['id'] = model_tag['id']
