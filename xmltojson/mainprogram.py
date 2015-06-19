@@ -106,7 +106,6 @@ def do_everything(just_name):
             if item['species'][-2:] != '_e':
                 temp['outside'] = None
                 break
-        species_list.append(temp)
         reaction_list.append(temp)
 
     output['id'] = model_tag['id']

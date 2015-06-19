@@ -125,3 +125,60 @@ def dump_to_json(master):
     shutil.copyfile(src, dst)
 
 
+def dump_to_json_for_retriever(target):
+    fp = open('target.json', 'w')
+    json.dump(target, fp)
+
+
+#  //////////////////////////////////////////////////////////////////////////
+#  ------- for retriever.py -----
+
+
+def include_necessary_attribute(metabolite_or_reaction, item, category):
+    new= {}
+    new['id'] = item + '-' + metabolite_or_reaction['id']
+    new['name'] = metabolite_or_reaction['name']
+    if category == 'metabolite':
+        new['compartment'] = metabolite_or_reaction['compartment']
+        new['charge'] = metabolite_or_reaction['charge']
+        new['formula'] = metabolite_or_reaction['formula']
+    if category == 'reactions':
+        new['metabolites'] = metabolite_or_reaction['metabolites']
+        new['upper_bound'] = metabolite_or_reaction['upper_bound']
+        new['lower_bound'] = metabolite_or_reaction['lower_bound']
+        new['objective_coefficient'] = metabolite_or_reaction['objective_coefficient']
+        new['subsystem'] = metabolite_or_reaction['subsystem']
+    return new
+
+
+
+def retrieve_metabolite_or_reaction(model, master, target, category):
+    counter1 = 0
+    counter2 = 0
+    counter3 = 0
+    for m_or_r_json in master[category]:
+        intersection = list(set(model) & set(m_or_r_json['species']))
+        if intersection and (m_or_r_json['outside'] is None):
+            for item in intersection:
+                target[category].append(include_necessary_attribute(m_or_r_json, item, category))
+                counter1 += 1
+        elif intersection and (m_or_r_json['outside'] is True):
+            target[category].append(include_necessary_attribute(m_or_r_json, 'shared', category))
+#   may only have one species that have this extracellular reaction
+            counter2 += 1
+        elif not intersection:
+            print(m_or_r_json['id'], ' not present in the requested model')
+            counter3 += 1
+        else:
+            print('something went wrong :(')
+    print(category + ': ' + str(counter1) + ' duplicates || ' + str(counter2) +
+          ' shared || ' + str(counter3) + ' not used')
+    midway = target
+    return midway
+
+def retrieve_all(model, source, sink):
+    print('In Target:')
+    midway = retrieve_metabolite_or_reaction(model, source, sink, 'metabolites')
+    retrieve_metabolite_or_reaction(model, source, midway, 'reactions')
+    return midway
+
