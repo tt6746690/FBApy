@@ -5,6 +5,7 @@ import json
 def build_soup(name):
     file = open(name)
     f = file.read()
+    f.replace('__', '_')
     soup_m = BeautifulSoup(f)
     return soup_m
 
@@ -27,6 +28,8 @@ def do_everything(just_name):
     species_list = []
     for obj in species:
         temp = {}
+        if 'DASH' in obj['id']:
+            obj['id'].replace('DASH', '')
         temp['id'] = obj['id'][2:]
         temp['name'] = obj['name']
         temp['compartment'] = obj['compartment']
@@ -43,9 +46,9 @@ def do_everything(just_name):
                 else:
                     temp['charge'] = 0
                     counter_in += 1
-        if obj['id'][-2:] == '_e':
+        if (obj['id'][-2:] == '_e') or (obj['id'][-10:] == 'e_boundary'):
             temp['outside'] = True
-        elif obj['id'][-2:] == '_c' or '_p':
+        elif (obj['id'][-2:] == '_c') or (obj['id'][-2:] == '_p') or (obj['id'][-10:] == 'c_boundary'):
             temp['outside'] = None
         else:
             print('error in assigning metabolite outside attribute')
@@ -55,6 +58,8 @@ def do_everything(just_name):
     reaction_list = []
     for good in reaction:
         temp = {}
+        if 'DASH' in good['id']:
+            good['id'].replace('DASH', '')
         temp['id'] = good['id'][2:]
         temp['name'] = good['name']
         temp['species'] = []
@@ -78,8 +83,12 @@ def do_everything(just_name):
             if item.has_attr('stoichiometry'):
                 number = float(item['stoichiometry'])
                 if item.parent.name == 'listofproducts':
+                    if 'DASH' in item['species']:
+                        item['species'].replace('DASH', '')
                     metabolite[item['species'][2:]] = number
                 elif item.parent.name == 'listofreactants':
+                    if 'DASH' in item['species']:
+                        item['species'].replace('DASH', '')
                     metabolite[item['species'][2:]] = -number
                 else:
                     print('error')
@@ -115,7 +124,9 @@ def do_everything(just_name):
     output['genes'] = []
 
     fp = open(os.path.join(os.getcwd() + '/speciesjson/' + os.path.splitext(os.path.basename(path_name))[0] + '.json'), 'w')
-    json.dump(output, fp)
+    fp.write(output)
+    fp.close()
+#    json.dump(output, fp)
 
 counter = 1
 sbmlfiles = []

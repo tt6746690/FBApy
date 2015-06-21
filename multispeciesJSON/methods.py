@@ -48,7 +48,7 @@ def increase_number_attribute(final):
 def initial_load(source, sink):
     count = 0
     counter = 0
-    print('mergeing ' + source['id'] + ' to ' + sink['id'] + ':')
+    print('merging ' + source['id'] + ' to ' + sink['id'] + ':')
     for metabolite in source['metabolites']:
         sink['metabolites'].append(metabolite)
         counter += 1
@@ -98,7 +98,7 @@ def later_load_reaction(source, sink):
     logging('reactions', count, counter)
 
 def later_load(source, sink):
-    print('mergeing ' + source['id'] + ' to ' + sink['id'] + ':')
+    print('merging ' + source['id'] + ' to ' + sink['id'] + ':')
     later_load_metabolite(source, sink)
     later_load_reaction(source, sink)
     increase_number_attribute(sink)
@@ -125,25 +125,38 @@ def dump_to_json(master):
     shutil.copyfile(src, dst)
 
 
-def dump_to_json_for_retriever(target):
-    fp = open('target.json', 'w')
-    json.dump(target, fp)
 
 
 #  //////////////////////////////////////////////////////////////////////////
 #  ------- for retriever.py -----
 
+def dump_to_json_for_retriever(target):
+    fp = open('target.json', 'w')
+    json.dump(target, fp)
+
+
+def adding_prefix_to_metabolites_in_reaction(reaction_s_metabolite_json, item):
+    m_dict = {}
+    for obj in reaction_s_metabolite_json.items():
+        new = list(obj)
+        if new[0][-2:] == '_e' or new[0][-10:] == 'e_boundary':
+            new[0] = 'shared' + '-' + new[0]
+        elif (new[0][-2:] == '_c') or (new[0][-2:] == '_p') or (new[0][-10:] == 'c_boundary'):
+            new[0] = item + '-' + new[0]
+# have to modify this part to incorporate what to do with metabolites that end in _boundary
+        m_dict[new[0]] = new[-1]
+    return m_dict
 
 def include_necessary_attribute(metabolite_or_reaction, item, category):
     new= {}
     new['id'] = item + '-' + metabolite_or_reaction['id']
     new['name'] = metabolite_or_reaction['name']
-    if category == 'metabolite':
+    if category == 'metabolites':
         new['compartment'] = metabolite_or_reaction['compartment']
         new['charge'] = metabolite_or_reaction['charge']
         new['formula'] = metabolite_or_reaction['formula']
     if category == 'reactions':
-        new['metabolites'] = metabolite_or_reaction['metabolites']
+        new['metabolites'] = adding_prefix_to_metabolites_in_reaction(metabolite_or_reaction['metabolites'], item)
         new['upper_bound'] = metabolite_or_reaction['upper_bound']
         new['lower_bound'] = metabolite_or_reaction['lower_bound']
         new['objective_coefficient'] = metabolite_or_reaction['objective_coefficient']
@@ -179,6 +192,6 @@ def retrieve_metabolite_or_reaction(model, master, target, category):
 def retrieve_all(model, source, sink):
     print('In Target:')
     midway = retrieve_metabolite_or_reaction(model, source, sink, 'metabolites')
-    retrieve_metabolite_or_reaction(model, source, midway, 'reactions')
-    return midway
+    final = retrieve_metabolite_or_reaction(model, source, midway, 'reactions')
+    return final
 

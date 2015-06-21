@@ -1,10 +1,10 @@
-list1 = [1, '2', 3]
-list2 = ['2', '3', 2, 3, 8]
-f = set(list1)
-p = f.intersection(list2)
+def do(a):
+    a += 1
+    return a
 
-hi = list(set(list1) & set(list2))
-print(hi)
-print(list(p))
-if 1 is list:
-    print('yes')
+def dodo():
+    a = 2
+    a = do(a)
+    print(a)
+
+dodo()
