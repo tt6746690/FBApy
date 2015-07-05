@@ -2,7 +2,7 @@ import cobra
 import os
 import json
 
-input_file = os.path.join(os.getcwd(), 'input\\', 'Master.json')
+input_file = os.path.join(os.getcwd(), 'input\\', 'iJO1366.json')
 '''
 file = open('target.json')
 f = file.read()
@@ -14,7 +14,13 @@ file1 = open('target.json', 'w')
 f1 = file1.write(f)
 file1.close()
 '''
-model = cobra.io.load_json_model('target.json')
+model = cobra.io.load_json_model(input_file)
 model.optimize()
-print(model.solution.f)
+flux_dict = model.solution.x_dict
+
+fp = open('flux_dict.json', 'w')
+json.dump(flux_dict, fp)
+
+
+
 
